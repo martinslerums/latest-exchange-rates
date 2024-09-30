@@ -1,20 +1,24 @@
 const axios = require("axios");
+const dotenv = require("dotenv");
 const cron = require("node-cron");
-const db = require("./database/models"); 
+const db = require("./models"); 
 
-const { Currency, ExchangeRate } = db; 
+dotenv.config();
+const { Currency, ExchangeRate } = db;
 
-async function updateExchangeRates() {
+const updateExchangeRates = async () => {
   const date = new Date();
+  const apiKey = process.env.ANYAPI_KEY;
+  const baseCurrency = process.env.ANYAPI_BASE_CURRENCY;
+
   try {
     const response = await axios.get(
-      "https://anyapi.io/api/v1/exchange/rates?apiKey=27t3m46p5t8iep78rvqb88a5amb9hqquoc4i72hs60f8ebklh19gl2&base=EUR"
+      `https://anyapi.io/api/v1/exchange/rates?apiKey=${apiKey}&base=${baseCurrency}`
     );
     const rates = response.data.rates;
 
     for (const [currency, rate] of Object.entries(rates)) {
       if (currency !== "EUR") {
-
         const currencyEntry = await Currency.findOne({
           where: { target_currency: currency },
         });
@@ -25,21 +29,26 @@ async function updateExchangeRates() {
             date: date,
             exchange_rate: rate,
           });
-        } 
+        }
       }
     }
 
     console.log("Exchange rates updated successfully.");
+
+    await db.CronJob.create({
+      lastRunDate: date,
+    });
+    
+    console.log("Last run date updated in cronJobs table:", date);
   } catch (error) {
-    console.error("Error fetching exchange rates:", error);
+    console.error("Error updating exchange rates:", error.message);
   }
 }
 
 
 cron.schedule("0 12 * * *", () => {
-  console.log("Running daily exchange rate update...");
+  console.log("Running daily exchange rate update at 12 PM");
   updateExchangeRates();
 });
 
-module.exports = { updateExchangeRates }; 
-
+module.exports = { updateExchangeRates };
