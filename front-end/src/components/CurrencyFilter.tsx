@@ -7,8 +7,11 @@ import {
 } from "@/components/ui/select";
 import useExchangeRateFilters from "@/hooks/useExchangeRateFilters";
 
+type CurrencyFilterProps = {
+  className?: string;
+};
 
-const CurrencyFilter = () => {
+const CurrencyFilter = ({ className }: CurrencyFilterProps) => {
   const { target_currency, setFilters } = useExchangeRateFilters();
 
   const handleChange = (newCurrency: "USD" | "AUD" | "GBP") => {
@@ -17,8 +20,8 @@ const CurrencyFilter = () => {
 
   return (
     <Select value={target_currency} onValueChange={handleChange}>
-      <SelectTrigger className="w-[180px]">
-        <SelectValue placeholder="Select a currency" />
+      <SelectTrigger className={className}>
+        <SelectValue placeholder="" />
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="USD">American Dollar (USD)</SelectItem>
