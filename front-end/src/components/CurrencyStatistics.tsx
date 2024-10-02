@@ -20,10 +20,10 @@ const CurrencyStatistics = ({ statistics }: CurrencyStatisticsProps) => {
         day: "numeric",
         hour: "2-digit",
         minute: "2-digit",
-        hour12: false, 
+        hour12: false,
       })
     : "Incorrect format date";
-  
+
   return (
     <div>
       <Card>
