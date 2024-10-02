@@ -1,13 +1,9 @@
 import {
   ColumnDef,
-  SortingState,
   flexRender,
   getCoreRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-
 import {
   Table,
   TableBody,
@@ -16,31 +12,39 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ExchangeRate } from "@/types/typings";
+import { CurrencyFilters, ExchangeRate, Pagination } from "@/types/typings";
 
-import { useState } from "react";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowDown, ArrowUp } from "lucide-react";
 import { Button } from "./ui/button";
+import TablePagination from "./TablePagination";
+import useExchangeRateFilters from "@/hooks/useExchangeRateFilters";
 
 type CurrencyTableProps = {
   data: ExchangeRate[];
-  currency: "USD" | "AUD" | "GBP";
+  currency: CurrencyFilters["target_currency"];
+  pagination: Pagination;
 };
 
-const CurrencyTable = ({ data, currency }: CurrencyTableProps) => {
-  const [sorting, setSorting] = useState<SortingState>([]);
+const CurrencyTable = ({ data, currency, pagination }: CurrencyTableProps) => {
+  const { order, setFilters } = useExchangeRateFilters();
+
+  const handleSortChange = () => {
+    const sortOrder = order === "ASC" ? "DESC" : "ASC";
+    setFilters({ order: sortOrder });
+  };
 
   const columns: ColumnDef<ExchangeRate>[] = [
     {
       accessorKey: "date",
-      header: ({ column }) => {
+      header: () => {
         return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
+          <Button variant="ghost" onClick={handleSortChange}>
             Date
-            <ArrowUpDown className="ml-2 h-4 w-4" />
+            {order === "ASC" ? (
+              <ArrowUp className="ml-2 h-4 w-4" />
+            ) : (
+              <ArrowDown className="ml-2 h-4 w-4" />
+            )}
           </Button>
         );
       },
@@ -55,21 +59,10 @@ const CurrencyTable = ({ data, currency }: CurrencyTableProps) => {
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    onSortingChange: setSorting,
-    getSortedRowModel: getSortedRowModel(),
-    state: {
-      sorting,
-    },
-    initialState: {
-      pagination: {
-        pageSize: 5,
-      },
-    },
   });
 
   return (
-    <div>
+    <>
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -118,25 +111,10 @@ const CurrencyTable = ({ data, currency }: CurrencyTableProps) => {
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          Previous
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          Next
-        </Button>
-      </div>
-    </div>
+      {pagination.totalPages > 1 && (
+        <TablePagination totalPages={pagination.totalPages} />
+      )}
+    </>
   );
 };
 
